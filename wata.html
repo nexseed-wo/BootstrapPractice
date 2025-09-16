@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>wataのページ</title>
+        <!-- Bootstrap CSS -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous"
+        />
+        <!-- Bootstrap Icons -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                background: #f7f7f9;
+            }
+            .card-glow {
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            }
+            .pointer {
+                cursor: pointer;
+            }
+            .todo-completed .todo-title {
+                text-decoration: line-through;
+                opacity: 0.7;
+            }
+            .tag {
+                font-size: 0.75rem;
+            }
+            .empty-state {
+                color: #6c757d;
+            }
+            .list-group-item {
+                transition: background-color 0.15s ease, transform 0.05s ease;
+            }
+            .list-group-item:active {
+                transform: scale(0.997);
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+            <div class="container">
+                <a class="navbar-brand fw-semibold" href="#"
+                    ><i class="bi bi-check2-square me-2"></i>Todo App</a
+                >
+            </div>
+        </nav>
+
+        <main class="container py-4">
+            <!-- Create -->
+            <div class="card border-0 card-glow mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <h5 class="card-title mb-0">新規タスク</h5>
+                        <span class="ms-2 badge text-bg-secondary"
+                            >UI: Bootstrap 5</span
+                        >
+                    </div>
+                    <form
+                        id="createForm"
+                        class="row gy-3 gx-3"
+                        autocomplete="off"
+                    >
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="title"
+                                >タイトル
+                                <span class="text-danger">*</span></label
+                            >
+                            <input
+                                type="text"
+                                id="title"
+                                class="form-control"
+                                placeholder="例: 企画書の初稿を作成"
+                                required
+                            />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="due">期限</label>
+                            <input type="date" id="due" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="desc">詳細</label>
+                            <textarea
+                                id="desc"
+                                class="form-control"
+                                rows="2"
+                                placeholder="補足やメモを入力"
+                            ></textarea>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="priority"
+                                >優先度</label
+                            >
+                            <select id="priority" class="form-select">
+                                <option value="medium" selected>中</option>
+                                <option value="high">高</option>
+                                <option value="low">低</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-8">
+                            <label class="form-label" for="tags"
+                                >タグ（カンマ区切り）</label
+                            >
+                            <input
+                                type="text"
+                                id="tags"
+                                class="form-control"
+                                placeholder="例: 仕事, 提案, クライアントA"
+                            />
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>追加
+                            </button>
+                            <button
+                                type="reset"
+                                class="btn btn-outline-secondary"
+                            >
+                                リセット
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="row g-3 align-items-center mb-3">
+                <div class="col-12 col-lg-6 d-flex gap-2">
+                    <div
+                        class="btn-group"
+                        role="group"
+                        aria-label="Filter status"
+                    >
+                        <input
+                            type="radio"
+                            class="btn-check"
+                            name="filter-status"
+                            id="filter-all"
+                            value="all"
+                            autocomplete="off"
+                            checked
+                        />
+                        <label
+                            class="btn btn-outline-secondary"
+                            for="filter-all"
+                            ><i class="bi bi-list-task me-1"></i>すべて</label
+                        >
+
+                        <input
+                            type="radio"
+                            class="btn-check"
+                            name="filter-status"
+                            id="filter-active"
+                            value="active"
+                            autocomplete="off"
+                        />
+                        <label
+                            class="btn btn-outline-secondary"
+                            for="filter-active"
+                            ><i class="bi bi-circle me-1"></i>未完了</label
+                        >
+
+                        <input
+                            type="radio"
+                            class="btn-check"
+                            name="filter-status"
+                            id="filter-done"
+                            value="done"
+                            autocomplete="off"
+                        />
+                        <label
+                            class="btn btn-outline-secondary"
+                            for="filter-done"
+                            ><i class="bi bi-check-circle me-1"></i>完了</label
+                        >
+                    </div>
+                    <select id="sort" class="form-select w-auto">
+                        <option value="createdDesc" selected>新しい順</option>
+                        <option value="createdAsc">古い順</option>
+                        <option value="dueAsc">期限が近い順</option>
+                        <option value="dueDesc">期限が遠い順</option>
+                        <option value="priority">優先度</option>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text"
+                            ><i class="bi bi-search"></i
+                        ></span>
+                        <input
+                            id="search"
+                            type="search"
+                            class="form-control"
+                            placeholder="タイトル・詳細・タグで検索"
+                        />
+                        <button
+                            id="clearCompleted"
+                            class="btn btn-outline-danger"
+                            type="button"
+                            title="完了の一括削除"
+                        >
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="card border-0 card-glow">
+                <div class="card-body p-0">
+                    <ul id="todoList" class="list-group list-group-flush">
+                        <!-- items injected here -->
+                    </ul>
+                    <div id="empty" class="text-center py-5 empty-state d-none">
+                        <i class="bi bi-inbox display-5 d-block mb-2"></i>
+                        <p class="mb-1">タスクはまだありません。</p>
+                        <p class="small mb-0">
+                            上部フォームから追加してください。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">タスクを編集</h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <form id="editForm">
+                        <div class="modal-body">
+                            <input type="hidden" id="edit-id" />
+                            <div class="mb-3">
+                                <label class="form-label" for="edit-title"
+                                    >タイトル</label
+                                >
+                                <input
+                                    type="text"
+                                    id="edit-title"
+                                    class="form-control"
+                                    required
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="edit-due"
+                                    >期限</label
+                                >
+                                <input
+                                    type="date"
+                                    id="edit-due"
+                                    class="form-control"
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="edit-desc"
+                                    >詳細</label
+                                >
+                                <textarea
+                                    id="edit-desc"
+                                    class="form-control"
+                                    rows="2"
+                                ></textarea>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label
+                                        class="form-label"
+                                        for="edit-priority"
+                                        >優先度</label
+                                    >
+                                    <select
+                                        id="edit-priority"
+                                        class="form-select"
+                                    >
+                                        <option value="high">高</option>
+                                        <option value="medium">中</option>
+                                        <option value="low">低</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="edit-tags"
+                                        >タグ（カンマ区切り）</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="edit-tags"
+                                        class="form-control"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal"
+                            >
+                                キャンセル
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+            <div
+                id="toast"
+                class="toast align-items-center"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                <div class="d-flex">
+                    <div class="toast-body" id="toastBody"></div>
+                    <button
+                        type="button"
+                        class="btn-close me-2 m-auto"
+                        data-bs-dismiss="toast"
+                        aria-label="Close"
+                    ></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates -->
+        <template id="itemTemplate">
+            <li class="list-group-item d-flex align-items-start gap-3">
+                <div class="form-check pt-1">
+                    <input
+                        class="form-check-input mt-0 todo-check"
+                        type="checkbox"
+                    />
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="fw-semibold todo-title"></span>
+                        <span class="badge rounded-pill priority-badge"></span>
+                        <span class="ms-auto small text-secondary"
+                            ><i class="bi bi-calendar2 me-1"></i
+                            ><span class="todo-due-text"></span
+                        ></span>
+                    </div>
+                    <div class="text-body-secondary small mb-2 todo-desc"></div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="tags"></div>
+                        <div class="ms-auto d-flex gap-2">
+                            <button
+                                class="btn btn-sm btn-outline-primary edit-btn"
+                                title="編集"
+                            >
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button
+                                class="btn btn-sm btn-outline-danger delete-btn"
+                                title="削除"
+                            >
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </template>
+
+        <!-- Bootstrap JS -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- App Script -->
+        <script>
+            // --- Simple Todo App (LocalStorage) ---
+            const $ = (sel, root = document) => root.querySelector(sel);
+            const $$ = (sel, root = document) => [
+                ...root.querySelectorAll(sel),
+            ];
+            const storeKey = "bootstrap-todos-v1";
+
+            /** @typedef {{id:string,title:string,desc:string,due:string,priority:'high'|'medium'|'low',tags:string[],done:boolean,created:number}} Todo */
+
+            /** @type {Todo[]} */
+            let todos = [];
+
+            const toastEl = $("#toast");
+            const toastBody = $("#toastBody");
+            const toast = new bootstrap.Toast(toastEl, { delay: 1800 });
+            const showToast = (msg) => {
+                toastBody.textContent = msg;
+                toast.show();
+            };
+
+            function save() {
+                localStorage.setItem(storeKey, JSON.stringify(todos));
+            }
+            function load() {
+                todos = JSON.parse(localStorage.getItem(storeKey) || "[]");
+            }
+
+            function priorityBadge(p) {
+                switch (p) {
+                    case "high":
+                        return ["高", "text-bg-danger"];
+                    case "low":
+                        return ["低", "text-bg-secondary"];
+                    default:
+                        return ["中", "text-bg-warning"];
+                }
+            }
+
+            function formatDue(due) {
+                if (!due) return "—";
+                const d = new Date(due + "T00:00:00");
+                return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(
+                    2,
+                    "0"
+                )}/${String(d.getDate()).padStart(2, "0")}`;
+            }
+
+            function filteredAndSorted() {
+                const status = $('input[name="filter-status"]:checked').value; // all | active | done
+                const q = $("#search").value.trim().toLowerCase();
+                let list = todos.filter((t) => {
+                    if (status === "active" && t.done) return false;
+                    if (status === "done" && !t.done) return false;
+                    const hay = (
+                        t.title +
+                        " " +
+                        t.desc +
+                        " " +
+                        t.tags.join(" ")
+                    ).toLowerCase();
+                    return hay.includes(q);
+                });
+                const sort = $("#sort").value;
+                list.sort((a, b) => {
+                    if (sort === "createdAsc") return a.created - b.created;
+                    if (sort === "createdDesc") return b.created - a.created;
+                    if (sort === "dueAsc")
+                        return (a.due || "9999") < (b.due || "9999") ? -1 : 1;
+                    if (sort === "dueDesc")
+                        return (a.due || "0000") > (b.due || "0000") ? -1 : 1;
+                    if (sort === "priority") {
+                        const score = { high: 0, medium: 1, low: 2 };
+                        return score[a.priority] - score[b.priority];
+                    }
+                    return 0;
+                });
+                return list;
+            }
+
+            function render() {
+                const listEl = $("#todoList");
+                listEl.innerHTML = "";
+                const items = filteredAndSorted();
+                $("#empty").classList.toggle("d-none", items.length !== 0);
+                const tmpl = $("#itemTemplate");
+                for (const t of items) {
+                    const li = tmpl.content.firstElementChild.cloneNode(true);
+                    const check = $(".todo-check", li);
+                    const title = $(".todo-title", li);
+                    const desc = $(".todo-desc", li);
+                    const dueText = $(".todo-due-text", li);
+                    const badge = $(".priority-badge", li);
+                    const tags = $(".tags", li);
+                    const [label, cls] = priorityBadge(t.priority);
+                    badge.textContent = `優先度: ${label}`;
+                    badge.classList.add(cls);
+                    title.textContent = t.title;
+                    desc.textContent = t.desc || "";
+                    dueText.textContent = formatDue(t.due);
+                    check.checked = t.done;
+                    li.classList.toggle("todo-completed", t.done);
+                    for (const tag of t.tags) {
+                        const span = document.createElement("span");
+                        span.className =
+                            "badge rounded-pill text-bg-light border tag";
+                        span.textContent = `#${tag}`;
+                        tags.appendChild(span);
+                    }
+                    $(".edit-btn", li).addEventListener("click", () =>
+                        openEdit(t.id)
+                    );
+                    $(".delete-btn", li).addEventListener("click", () =>
+                        removeTodo(t.id)
+                    );
+                    check.addEventListener("change", (e) =>
+                        toggleDone(t.id, e.target.checked)
+                    );
+                    listEl.appendChild(li);
+                }
+            }
+
+            function addTodo(ev) {
+                ev.preventDefault();
+                const title = $("#title").value.trim();
+                if (!title) return;
+                const todo = {
+                    id: crypto.randomUUID(),
+                    title,
+                    desc: $("#desc").value.trim(),
+                    due: $("#due").value,
+                    priority: $("#priority").value,
+                    tags: $("#tags")
+                        .value.split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    done: false,
+                    created: Date.now(),
+                };
+                todos.unshift(todo);
+                save();
+                render();
+                $("#createForm").reset();
+                showToast("タスクを追加しました");
+            }
+
+            function toggleDone(id, checked) {
+                const t = todos.find((x) => x.id === id);
+                if (!t) return;
+                t.done = checked;
+                save();
+                render();
+            }
+
+            function removeTodo(id) {
+                const idx = todos.findIndex((x) => x.id === id);
+                if (idx === -1) return;
+                todos.splice(idx, 1);
+                save();
+                render();
+                showToast("タスクを削除しました");
+            }
+
+            // Edit
+            let editModal;
+            function openEdit(id) {
+                const t = todos.find((x) => x.id === id);
+                if (!t) return;
+                $("#edit-id").value = t.id;
+                $("#edit-title").value = t.title;
+                $("#edit-desc").value = t.desc;
+                $("#edit-due").value = t.due;
+                $("#edit-priority").value = t.priority;
+                $("#edit-tags").value = t.tags.join(", ");
+                editModal ??= new bootstrap.Modal($("#editModal"));
+                editModal.show();
+            }
+
+            function saveEdit(ev) {
+                ev.preventDefault();
+                const id = $("#edit-id").value;
+                const t = todos.find((x) => x.id === id);
+                if (!t) return;
+                t.title = $("#edit-title").value.trim();
+                t.desc = $("#edit-desc").value.trim();
+                t.due = $("#edit-due").value;
+                t.priority = $("#edit-priority").value;
+                t.tags = $("#edit-tags")
+                    .value.split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                save();
+                render();
+                editModal.hide();
+                showToast("更新しました");
+            }
+
+            // Bulk
+            function clearCompleted() {
+                const before = todos.length;
+                todos = todos.filter((t) => !t.done);
+                save();
+                render();
+                const removed = before - todos.length;
+                if (removed > 0)
+                    showToast(`${removed}件の完了タスクを削除しました`);
+            }
+
+            // Events
+            $("#createForm").addEventListener("submit", addTodo);
+            $("#editForm").addEventListener("submit", saveEdit);
+            $("#clearCompleted").addEventListener("click", clearCompleted);
+            $$('#sort, input[name="filter-status"]').forEach((el) =>
+                el.addEventListener("change", render)
+            );
+            $("#search").addEventListener("input", render);
+
+            // Seed for demo
+            function seed() {
+                if (todos.length) return;
+                todos = [
+                    {
+                        id: crypto.randomUUID(),
+                        title: "提案書ドラフト",
+                        desc: "セクション2の図版追加",
+                        due: new Date(Date.now() + 86400000)
+                            .toISOString()
+                            .slice(0, 10),
+                        priority: "high",
+                        tags: ["仕事", "A社"],
+                        done: false,
+                        created: Date.now() - 20000,
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: "買い物リスト",
+                        desc: "牛乳, 卵, コーヒー豆",
+                        due: "",
+                        priority: "low",
+                        tags: ["個人"],
+                        done: false,
+                        created: Date.now() - 30000,
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: "週次ミーティング準備",
+                        desc: "アジェンダ作成と資料確認",
+                        due: new Date(Date.now() + 3 * 86400000)
+                            .toISOString()
+                            .slice(0, 10),
+                        priority: "medium",
+                        tags: ["チーム"],
+                        done: true,
+                        created: Date.now() - 40000,
+                    },
+                ];
+                save();
+            }
+
+            // Init
+            load();
+            seed();
+            render();
+        </script>
+    </body>
+</html>
