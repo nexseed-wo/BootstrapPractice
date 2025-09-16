@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todoアプリ</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- ヘッダー -->
+  <nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1">My ToDo App</span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- 入力フォーム -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <form id="todoForm" class="d-flex gap-2">
+          <input type="text" id="todoInput" class="form-control" placeholder="タスクを入力..." required>
+          <button type="submit" class="btn btn-primary">追加</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- タスクリスト -->
+    <div class="row">
+      <!-- 未完了タスク -->
+      <div class="col-md-6 mb-3">
+        <div class="card shadow-sm">
+          <div class="card-header bg-warning">
+            未完了タスク
+          </div>
+          <ul class="list-group list-group-flush" id="incompleteList">
+            <!-- JSで追加される -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- 完了タスク -->
+      <div class="col-md-6 mb-3">
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white">
+            完了タスク
+          </div>
+          <ul class="list-group list-group-flush" id="completeList">
+            <!-- JSで追加される -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const todoForm = document.getElementById("todoForm");
+    const todoInput = document.getElementById("todoInput");
+    const incompleteList = document.getElementById("incompleteList");
+    const completeList = document.getElementById("completeList");
+
+    // タスクを追加
+    todoForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const taskText = todoInput.value.trim();
+      if (taskText !== "") {
+        addTask(taskText, false);
+        todoInput.value = "";
+      }
+    });
+
+    // タスク作成関数
+    function addTask(text, isComplete) {
+      const li = document.createElement("li");
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>${text}</span>
+        <div>
+          ${isComplete 
+            ? '<button class="btn btn-warning btn-sm me-1">↩</button>'
+            : '<button class="btn btn-success btn-sm me-1">✔</button>'
+          }
+          <button class="btn btn-danger btn-sm">🗑</button>
+        </div>
+      `;
+
+      // ボタン動作
+      const [actionBtn, deleteBtn] = li.querySelectorAll("button");
+
+      // 完了ボタン or 戻すボタン
+      actionBtn.addEventListener("click", () => {
+        li.remove();
+        if (isComplete) {
+          addTask(text, false); // 戻す
+        } else {
+          addTask(text, true);  // 完了
+        }
+      });
+
+      // 削除ボタン
+      deleteBtn.addEventListener("click", () => {
+        li.remove();
+      });
+
+      // リストに追加
+      if (isComplete) {
+        completeList.appendChild(li);
+      } else {
+        incompleteList.appendChild(li);
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
