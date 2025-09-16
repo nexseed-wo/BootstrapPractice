@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>hikaruのページ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons（ボタン用） -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .task-completed .task-title { text-decoration: line-through; opacity: .65; }
+    .list-group-item { transition: background-color .15s ease; }
+    .badge-priority { min-width: 4rem; }
+    .task-tags .badge { margin-right: .25rem; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h3 mb-0">Todo</h1>
+      <div class="text-muted small" id="statsText">0 / 0 完了</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress mb-4" style="height: 8px;">
+      <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+    </div>
+
+    <!-- Add form -->
+    <form id="addForm" class="card shadow-sm mb-4">
+      <div class="card-body row gy-3 gx-3">
+        <div class="col-12 col-md-5">
+          <label for="titleInput" class="form-label">タスク</label>
+          <input id="titleInput" class="form-control" type="text" placeholder="例）買い物のリスト作成" required>
+        </div>
+        <div class="col-6 col-md-2">
+          <label for="dueInput" class="form-label">期限</label>
+          <input id="dueInput" class="form-control" type="date">
+        </div>
+        <div class="col-6 col-md-2">
+          <label for="prioSelect" class="form-label">優先度</label>
+          <select id="prioSelect" class="form-select">
+            <option value="medium" selected>中</option>
+            <option value="high">高</option>
+            <option value="low">低</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="tagsInput" class="form-label">タグ（カンマ区切り）</label>
+          <input id="tagsInput" class="form-control" type="text" placeholder="例）家事, 買い物">
+        </div>
+        <div class="col-12 d-flex justify-content-end">
+          <button class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>追加
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Toolbar -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body row gy-2 gx-3 align-items-center">
+        <div class="col-12 col-md-4">
+          <ul class="nav nav-pills small" id="filterTabs">
+            <li class="nav-item"><button class="nav-link active" data-filter="all">すべて</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="active">未完了</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="completed">完了</button></li>
+          </ul>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="searchInput" class="form-control" type="search" placeholder="タスク名で検索">
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <select id="sortSelect" class="form-select form-select-sm">
+            <option value="created_desc" selected>新しい順</option>
+            <option value="created_asc">古い順</option>
+            <option value="due_asc">期限が近い順</option>
+            <option value="due_desc">期限が遠い順</option>
+            <option value="prio_desc">優先度 高→低</option>
+            <option value="prio_asc">優先度 低→高</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2 d-flex gap-2 justify-content-end">
+          <div class="form-check me-2">
+            <input class="form-check-input" type="checkbox" id="selectAll">
+            <label class="form-check-label small" for="selectAll">全選択</label>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-outline-success btn-sm" id="bulkComplete"><i class="bi bi-check2-all me-1"></i>完了</button>
+            <button class="btn btn-outline-danger btn-sm" id="bulkDelete"><i class="bi bi-trash me-1"></i>削除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task list -->
+    <ul class="list-group shadow-sm" id="taskList" aria-live="polite"></ul>
+
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="editForm">
+        <div class="modal-header">
+          <h5 class="modal-title">タスクを編集</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-body row gy-3">
+          <div class="col-12">
+            <label for="editTitle" class="form-label">タスク</label>
+            <input id="editTitle" class="form-control" required>
+          </div>
+          <div class="col-6">
+            <label for="editDue" class="form-label">期限</label>
+            <input id="editDue" type="date" class="form-control">
+          </div>
+          <div class="col-6">
+            <label for="editPrio" class="form-label">優先度</label>
+            <select id="editPrio" class="form-select">
+              <option value="high">高</option>
+              <option value="medium">中</option>
+              <option value="low">低</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="editTags" class="form-label">タグ（カンマ区切り）</label>
+            <input id="editTags" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit"><i class="bi bi-save2 me-1"></i>保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ---------- Utilities ----------
+    const qs  = (s, el=document) => el.querySelector(s);
+    const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
+    const prioOrder = { high: 3, medium: 2, low: 1 };
+
+    // ---------- Elements ----------
+    const addForm     = qs('#addForm');
+    const titleInput  = qs('#titleInput');
+    const dueInput    = qs('#dueInput');
+    const prioSelect  = qs('#prioSelect');
+    const tagsInput   = qs('#tagsInput');
+
+    const filterTabs  = qs('#filterTabs');
+    const searchInput = qs('#searchInput');
+    const sortSelect  = qs('#sortSelect');
+
+    const selectAll   = qs('#selectAll');
+    const bulkComplete= qs('#bulkComplete');
+    const bulkDelete  = qs('#bulkDelete');
+
+    const taskList    = qs('#taskList');
+    const statsText   = qs('#statsText');
+    const progressBar = qs('#progressBar');
+
+    const editModalEl = qs('#editModal');
+    const editModal   = new bootstrap.Modal(editModalEl);
+    const editForm    = qs('#editForm');
+    const editTitle   = qs('#editTitle');
+    const editDue     = qs('#editDue');
+    const editPrio    = qs('#editPrio');
+    const editTags    = qs('#editTags');
+    let editingItem   = null;
+
+    let activeFilter = 'all';
+    let searchQuery = '';
+
+    // ---------- Create Task Item ----------
+    function makeTagBadges(tags) {
+      if (!tags) return '';
+      return tags.split(',')
+                 .map(t => t.trim())
+                 .filter(Boolean)
+                 .map(t => `<span class="badge text-bg-secondary">${t}</span>`)
+                 .join('');
+    }
+
+    function prioBadge(priority) {
+      const map = {
+        high:   'danger',
+        medium: 'warning',
+        low:    'secondary'
+      };
+      const label = { high: '高', medium: '中', low: '低' }[priority] || '中';
+      return `<span class="badge text-bg-${map[priority]||'secondary'} badge-priority">${label}</span>`;
+    }
+
+    function formatDate(d) {
+      return d ? d : '';
+    }
+
+    function makeItem({ title, due='', priority='medium', tags='' }) {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex align-items-start gap-3';
+      li.dataset.created   = Date.now();
+      li.dataset.due       = due || '';
+      li.dataset.priority  = priority;
+      li.dataset.completed = 'false';
+
+      li.innerHTML = `
+        <div class="form-check mt-1">
+          <input class="form-check-input select-task" type="checkbox" aria-label="選択">
+        </div>
+
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2">
+            ${prioBadge(priority)}
+            <span class="task-title fw-semibold">${title}</span>
+          </div>
+          <div class="text-muted small mt-1">
+            <i class="bi bi-calendar-event me-1"></i><span class="task-due">${formatDate(due)}</span>
+            <span class="task-tags ms-2">${makeTagBadges(tags)}</span>
+          </div>
+        </div>
+
+        <div class="btn-group btn-group-sm align-self-center">
+          <button class="btn btn-outline-success btn-complete" title="完了／解除" aria-label="完了切替"><i class="bi bi-check2-circle"></i></button>
+          <button class="btn btn-outline-secondary btn-edit"   title="編集" aria-label="編集"><i class="bi bi-pencil-square"></i></button>
+          <button class="btn btn-outline-danger btn-delete"    title="削除" aria-label="削除"><i class="bi bi-trash"></i></button>
+        </div>
+      `;
+      return li;
+    }
+
+    // ---------- Stats / Filter / Sort ----------
+    function updateStats() {
+      const items = qsa('li.list-group-item', taskList);
+      const done  = items.filter(li => li.dataset.completed === 'true').length;
+      const total = items.length;
+      statsText.textContent = `${done} / ${total} 完了`;
+
+      const pct = total ? Math.round(done * 100 / total) : 0;
+      progressBar.style.width = pct + '%';
+      progressBar.ariaValueNow = pct;
+      progressBar.textContent = '';
+    }
+
+    function applyFilters() {
+      const query = searchQuery.toLowerCase();
+      qsa('li.list-group-item', taskList).forEach(li => {
+        const title = qs('.task-title', li).textContent.toLowerCase();
+        const completed = li.dataset.completed === 'true';
+
+        let visible = true;
+        if (activeFilter === 'active' && completed) visible = false;
+        if (activeFilter === 'completed' && !completed) visible = false;
+        if (query && !title.includes(query)) visible = false;
+
+        li.classList.toggle('d-none', !visible);
+      });
+    }
+
+    function sortTasks() {
+      const items = qsa('li.list-group-item', taskList);
+      const sorted = [...items].sort((a,b) => {
+        const val = sortSelect.value;
+        const aDue = a.dataset.due || '';
+        const bDue = b.dataset.due || '';
+        const aPr  = prioOrder[a.dataset.priority] || 2;
+        const bPr  = prioOrder[b.dataset.priority] || 2;
+        const aCr  = +a.dataset.created;
+        const bCr  = +b.dataset.created;
+
+        switch(val) {
+          case 'created_asc':  return aCr - bCr;
+          case 'created_desc': return bCr - aCr;
+          case 'due_asc':      return (aDue||'9999-99-99').localeCompare(bDue||'9999-99-99');
+          case 'due_desc':     return (bDue||'').localeCompare(aDue||'');
+          case 'prio_desc':    return bPr - aPr;
+          case 'prio_asc':     return aPr - bPr;
+          default:             return bCr - aCr;
+        }
+      });
+      sorted.forEach(li => taskList.appendChild(li));
+    }
+
+    function refreshUI() {
+      updateStats();
+      sortTasks();
+      applyFilters();
+    }
+
+    // ---------- Event: Add ----------
+    addForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      if (!title) return;
+
+      const due = dueInput.value;
+      const prio = prioSelect.value;
+      const tags = tagsInput.value;
+
+      const li = makeItem({ title, due, priority: prio, tags });
+      taskList.prepend(li);
+
+      addForm.reset();
+      refreshUI();
+      titleInput.focus();
+    });
+
+    // ---------- Event: List actions (delegate) ----------
+    taskList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      const li  = e.target.closest('li.list-group-item');
+      if (!li) return;
+
+      // 完了トグル
+      if (btn?.classList.contains('btn-complete')) {
+        const done = li.dataset.completed === 'true';
+        li.dataset.completed = done ? 'false' : 'true';
+        li.classList.toggle('task-completed', !done);
+        refreshUI();
+      }
+
+      // 編集
+      if (btn?.classList.contains('btn-edit')) {
+        editingItem = li;
+        editTitle.value = qs('.task-title', li).textContent.trim();
+        editDue.value   = li.dataset.due || '';
+        editPrio.value  = li.dataset.priority || 'medium';
+        // タグ復元（テキストを再組立）
+        const tags = qsa('.task-tags .badge', li).map(b => b.textContent).join(', ');
+        editTags.value = tags;
+        editModal.show();
+      }
+
+      // 削除
+      if (btn?.classList.contains('btn-delete')) {
+        if (confirm('このタスクを削除しますか？')) {
+          li.remove();
+          refreshUI();
+        }
+      }
+    });
+
+    // ---------- Event: Edit Save ----------
+    editForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!editingItem) return;
+
+      const title = editTitle.value.trim();
+      const due   = editDue.value;
+      const prio  = editPrio.value;
+      const tags  = editTags.value;
+
+      editingItem.dataset.due = due || '';
+      editingItem.dataset.priority = prio;
+
+      qs('.task-title', editingItem).textContent = title || '(無題)';
+      qs('.task-due', editingItem).textContent   = formatDate(due);
+      // 優先度バッジ更新
+      qs('.badge-priority', editingItem.parentElement) // might not exist at this path; safer:
+      const prioContainer = editingItem.querySelector('.badge-priority')?.parentElement;
+      // 再描画：優先度バッジを置き換え
+      const titleRow = editingItem.querySelector('.d-flex.align-items-center.gap-2');
+      titleRow.firstElementChild.outerHTML = prioBadge(prio);
+      // タグ更新
+      editingItem.querySelector('.task-tags').innerHTML = makeTagBadges(tags);
+
+      editModal.hide();
+      refreshUI();
+    });
+
+    // ---------- Filter Tabs ----------
+    filterTabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-filter]');
+      if (!btn) return;
+      qsa('#filterTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      applyFilters();
+    });
+
+    // ---------- Search ----------
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      applyFilters();
+    });
+
+    // ---------- Sort ----------
+    sortSelect.addEventListener('change', sortTasks);
+
+    // ---------- Bulk ----------
+    selectAll.addEventListener('change', (e) => {
+      qsa('.select-task', taskList).forEach(cb => { cb.checked = e.target.checked; });
+    });
+
+    function selectedItems() {
+      return qsa('li.list-group-item', taskList).filter(li => li.querySelector('.select-task')?.checked);
+    }
+
+    bulkComplete.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectedItems().forEach(li => {
+        li.dataset.completed = 'true';
+        li.classList.add('task-completed');
+        li.querySelector('.select-task').checked = false;
+      });
+      selectAll.checked = false;
+      refreshUI();
+    });
+
+    bulkDelete.addEventListener('click', (e) => {
+      e.preventDefault();
+      const items = selectedItems();
+      if (!items.length) return;
+      if (confirm(`${items.length} 件のタスクを削除しますか？`)) {
+        items.forEach(li => li.remove());
+        selectAll.checked = false;
+        refreshUI();
+      }
+    });
+
+    // 初期表示
+    refreshUI();
+  </script>
+</body>
+</html>
